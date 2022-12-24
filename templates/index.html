@@ -1,1 +1,135 @@
-Example DOCS file
+<HTML>
+<style>
+body{
+background-image: url("https://media.tenor.com/Gy5g774ZNmIAAAAd/my-summer-car-msc.gif");
+background-attachment: fixed;
+background-size: cover;
+}
+</style>
+
+<style>
+      * {
+        color: black;
+        font-family: Arial, sans-serif;
+        text-shadow: 1px 1px #FFFFFF;
+      }
+</style>
+
+<body>
+<style>
+nav {
+  display: flex;
+  justify-content: center
+}
+
+ul {
+  list-style: none;
+  display: flex;
+  margin: 0;
+  padding: 0;
+}
+
+li {
+  margin: 0 10px;
+}
+
+.navbar {
+  text-decoration: none;
+  color: #333;
+}
+</style>
+
+<nav>
+  <ul>
+    <li><div>DB Size: {{ database_size }} MB</div></li>
+    <li><div>Total keys: {{ keys }}</div></li>
+    <li><div>Hits in last 5 minutes: {{ hits }}</div></li>
+  </ul>
+</nav>
+
+<marquee><h1 id="mrc-api-documentation">MRC API Documentation</h1></marquee>
+<p>Welcome to the API documentation for My Roblox Car. This API allows you to save/load savefiles from a game on Roblox made by me called My Roblox Car.</p>
+<h1 id="api-reference">API Reference</h1>
+<h2 id="endpoints">Endpoints</h2>
+<h3 id="gensecretplayerid"><code>/gensecret/[playerid]</code></h3>
+<h4 id="method">Method</h4>
+<p><code>GET</code></p>
+<h4 id="description">Description</h4>
+<p>Generates a new token for the player specified by <code>playerid</code>. This endpoint can only be called if the player doesn&#39;t already have a token.</p>
+<h4 id="parameters">Parameters</h4>
+<ul>
+<li><code>playerid</code> (string): The ID of the player for whom to generate a new token.</li>
+</ul>
+<h4 id="returns">Returns</h4>
+<ul>
+<li>A token (string).</li>
+</ul>
+<h4 id="errors">Errors</h4>
+<ul>
+<li><code>409</code>: Token for the user already exists.</li>
+</ul>
+<h3 id="saveplayeridtokentoken"><code>/save/[playerid]?token=[token]</code></h3>
+<h4 id="method-1">Method</h4>
+<p><code>POST</code></p>
+<h4 id="description-1">Description</h4>
+<p>Saves the current game for the player specified by <code>playerid</code>, using the provided <code>token</code> to authenticate the request. This endpoint can only be called if the player has a valid token.</p>
+<h4 id="parameters-1">Parameters</h4>
+<ul>
+<li><code>playerid</code> (string): The ID of the player for whom to save the game.</li>
+<li><code>token</code> (string): The token to use for authentication.</li>
+</ul>
+<h4 id="returns-1">Returns</h4>
+<ul>
+<li><code>200</code>: If the game was successfully saved.</li>
+</ul>
+<h4 id="errors-1">Errors</h4>
+<ul>
+<li><code>400</code>: Invalid player ID (player doesn&#39;t exist).</li>
+<li><code>400</code>: Missing token (no token was provided as a parameter).</li>
+<li><code>401</code>: Token doesn&#39;t match DB (wrong token provided).</li>
+<li><code>401</code>: You don&#39;t have a token, make a token with the <code>/gensecret</code> path (the player&#39;s token has expired).</li>
+<li><code>400</code>: Invalid token (token is not 100 characters long).</li>
+<li><code>400</code>: Invalid JSON format (provided body format is invalid).</li>
+<li><code>500</code>: Failed to write to DB, is your JSON formatted correctly? (body is not in JSON format).</li>
+</ul>
+<h3 id="loadplayerid"><code>/load/[playerid]</code></h3>
+<h4 id="method-2">Method</h4>
+<p><code>GET</code></p>
+<h4 id="description-2">Description</h4>
+<p>Loads the saved game for the player specified by <code>playerid</code>.</p>
+<h4 id="parameters-2">Parameters</h4>
+<ul>
+<li><code>playerid</code> (string): The ID of the player for whom to load the saved game.</li>
+</ul>
+<h4 id="returns-2">Returns</h4>
+<ul>
+<li>A JSON object containing the saved game data.</li>
+</ul>
+<h4 id="errors-2">Errors</h4>
+<ul>
+<li><code>404</code>: Error, key <code>[key]</code> is not found (save game doesn&#39;t exist).</li>
+</ul>
+<h3 id="resettokenplayerid"><code>/resettoken/[playerid]</code></h3>
+<h4 id="method-3">Method</h4>
+<p><code>GET</code></p>
+<h4 id="description-3">Description</h4>
+<p>Resets the token for the player specified by <code>playerid</code>. This endpoint can be used if the token transfer failed, and a new token needs to be generated. Can only be used in a 5 second range after a token was generated.</p>
+<h4 id="parameters-3">Parameters</h4>
+<ul>
+<li><code>playerid</code> (string): The ID of the player for whom to reset the token.</li>
+</ul>
+<h4 id="returns-3">Returns</h4>
+<ul>
+<li><code>200</code>: If the token was successfully reset.</li>
+<li><code>403</code>: error Forbiden</li>
+<li><code>403</code>: Client not is not reset viable</li>
+</ul>
+<h3 id="using">Using</h3>
+<h4 id="development">Development:</h4>
+<pre><code>  python3 api.py
+</code></pre>
+<h4 id="production">Production:</h4>
+<p>It is recomended to use a wsgi app for example gunicorn</p>
+<pre><code>  gunicorn --bind 0.0.0.0:5000 wsgi:app
+</code></pre>
+</body>
