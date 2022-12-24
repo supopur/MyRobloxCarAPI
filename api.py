@@ -1,3 +1,7 @@
+#Base of this code was written by https://github.com/BaseMax Forked from https://github.com/BaseMax/FirstRedisPython
+#Modified by https://github.com/supopur/
+#I got permision. You can search for my issue on github on his repo.
+
 import redis, yaml, os, json, pathlib
 from flask import Flask
 from flask import Flask, request
