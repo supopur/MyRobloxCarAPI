@@ -6,14 +6,16 @@ Welcome to the API documentation for My Roblox Car. This API allows you to save/
 
 Below is a list of the available endpoints for the API:
 
-#### /get/[playername]
-- Description: Returns a json with the player save data
+#### /load/[playername]
+- Description: Returns a json with the player save data.
 - HTTP Method: GET
 - Parameters:
-  - player: PlayerName
+  - playername: Roblox ID Of player
 - Example Request: https://api.nazev.eu/get/mazltus
 - Example Response: 
   ```json
+      "key": "mazltus"
+      "value": {
       {
         "version": "dev-1.0",
         "lastplayed": [
@@ -92,7 +94,7 @@ Below is a list of the available endpoints for the API:
 
 #### /save/[playername]
 - Description: Saves player data in a json format shown above. If player key doesnt exist in redis it creates a new one.
-- HTTP Method: PUT
+- HTTP Method: POST
 - Parameters:
   - playername: Roblox ID Of player
 - Example Request: https://api.nazev.eu/save/mazltus (Include json body with your data. It owerwrites the existing key so be sure to save everything.)
