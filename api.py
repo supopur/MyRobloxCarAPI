@@ -3,12 +3,12 @@
 #I got permision. You can search for my issue on github on his repo.
 #Most security related code was wrote by chatgpt.
 
-import redis, yaml, os, json, pathlib, secrets, hashlib, threading, datetime, time
+import redis, yaml, os, json, pathlib, secrets, hashlib, threading, datetime, time, requests
 from flask import Flask
 from flask import Flask, request
 from flask_restful import Resource, Api
 from redis.commands.json.path import Path
-
+from flask import render_template, make_response
 
 
 #Get password from the yml file
@@ -48,7 +48,27 @@ def generate_token():
     #Generates a random, secure token.
     return secrets.token_hex(50)
 
+def is_valid_player_id(player_id):
+    # Set the API endpoint URL
+    api_url = f"https://api.roblox.com/users/{player_id}"
 
+    # Replace {player_id} with the player ID you want to check
+
+    # Set the headers for the API request
+    headers = {
+        "Content-Type": "application/json",
+    }
+
+    # Send the request to the API
+    response = requests.get(api_url, headers=headers)
+
+    # Check the response status code
+    if response.status_code == 200:
+        # The player ID is valid
+        return True
+    else:
+        # The player ID is not valid
+        return False
 
 # Dictionary to store the tokens, expiration times, and request times
 ttl_dictionary = {}
@@ -72,6 +92,11 @@ threading.Timer(5, check_expirations).start()
 class reset_token(Resource):
 
     def get(self, client_id):
+
+        if not isinstance(client_id, str):
+            return "Invalid client ID", 400
+        if not len(client_id) == 100:
+            return "Client ID lenght invalid", 400
 
         # Check if the client has already requested a token within the past 30 seconds
         if client_id in ttl_dictionary:
@@ -103,6 +128,8 @@ def create_expire_key(key, value, days):
 
 class Save(Resource):
     def post(self, player_name):
+        if not is_valid_player_id(player_name):
+            return "Invalid player ID", 400
         token = request.args.get("token")
         if isinstance(token, type(None)): return "Missing token", 400
         if len(token) == 100:
@@ -112,16 +139,19 @@ class Save(Resource):
                 if str(r.get(f"{player_name}_secret"))[2:-1] == str(token):
                     pass
                 else: return "Token doesnt match the DB", 403
-            else: return "You dont have a token make a toking with the gensecret path", 404
+            else: return "You dont have a token make a token with the gensecret path", 404
         else: return "Invalid token", 400
 
         data = request.data
         if not check_json(data):
             return "Invalid JSON format", 400
         data = json.loads(data)
-
-        r.json().set(player_name, Path.root_path(), data["value"])
-        return "OK", 200
+        try:
+            r.json().set(player_name, Path.root_path(), data["value"])
+        except:
+            return "Failed to write to the DB Is your json formatted correctly?", 400
+        else:
+            return "OK", 200
 
 
 class Load(Resource):
@@ -143,7 +173,7 @@ class GenSecret(Resource):
             secret = generate_token()
             create_expire_key(f"{player}_secret", secret, 7)
             # Calculate the hash of the token string
-            token_hash = hashlib.sha256(secret.encode()).hexdigest()
+            token_hash = hashlib.sha1(secret.encode()).hexdigest()
 
             # Calculate the expiration time for the token (1 week from now)
             expiration_time = datetime.datetime.now().second + 5
@@ -157,10 +187,19 @@ class GenSecret(Resource):
         else:
             return "Internal Server Error", 500
 
+class Index(Resource):
+    def __init__(self):
+        pass
+    def get(self):
+        headers = {'Content-Type': 'text/html'}
+        return make_response(render_template('index.html'),200,headers)
+
+
 api.add_resource(GenSecret, "/gensecret/<string:player>")
 api.add_resource(Save, "/save/<string:player_name>")
 api.add_resource(Load, "/load/<string:key>")
 api.add_resource(reset_token, "/resettoken/<string:client_id>")
+api.add_resource(Index, "/")
 
 if __name__ == "__main__":
     app.run("0.0.0.0", port="5000", debug=True)
