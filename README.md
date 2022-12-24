@@ -6,14 +6,16 @@ Welcome to the API documentation for My Roblox Car. This API allows you to save/
 
 Below is a list of the available endpoints for the API:
 
-#### /get/[playername]
-- Description: Returns a json with the player save data
+#### /load/[playername]
+- Description: Returns a json with the player save data.
 - HTTP Method: GET
 - Parameters:
-  - player: PlayerName
+  - playername: Roblox ID Of player
 - Example Request: https://api.nazev.eu/get/mazltus
 - Example Response: 
   ```json
+      "key": "mazltus"
+      "value": {
       {
         "version": "dev-1.0",
         "lastplayed": [
@@ -92,7 +94,7 @@ Below is a list of the available endpoints for the API:
 
 #### /save/[playername]
 - Description: Saves player data in a json format shown above. If player key doesnt exist in redis it creates a new one.
-- HTTP Method: PUT
+- HTTP Method: POST
 - Parameters:
   - playername: Roblox ID Of player
 - Example Request: https://api.nazev.eu/save/mazltus (Include json body with your data. It owerwrites the existing key so be sure to save everything.)
@@ -104,9 +106,10 @@ I need to somehow do this.
 
 ### Errors
 
-- 500 Internal server error
-- When loading: 404 Not found (Player doesnt have a savefile)
-- When saving: 400 - Bad request (Invalid json format, Body is empty or body has invalid data type)
+- `200 OK`: This code indicates that the request was successful and the requested information was returned.
+- `400 Bad Request`: This code indicates that the server could not understand the request due to invalid syntax. This error is returned by the `Save` resource's `post` method if the request data is not valid JSON.
+- `404 Not Found`: This code indicates that the requested resource could not be found. This error is returned by the `Load` resource's `get` method if the requested key is not found in the Redis database.
+
 
 ### Using
 #### Development:
