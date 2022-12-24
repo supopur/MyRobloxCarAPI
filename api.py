@@ -9,6 +9,8 @@ from flask import Flask, request
 from flask_restful import Resource, Api
 from redis.commands.json.path import Path
 from flask import render_template, make_response
+from flask_limiter import Limiter
+
 
 
 #Get password from the yml file
@@ -33,6 +35,18 @@ else:
 app = Flask(__name__)
 api = Api(app)
 
+def rate_limit():
+    unique_string = request.args.get("token")
+    return unique_string
+
+limiter = Limiter(app, key_func=rate_limit)
+
+
+# Increment the hit count before any endpoint is called
+@app.before_request
+def increment_hit_count():
+    r.incr('hit_count')
+    r.expire('hit_count', 300)
 
 
 #Check if the value is a valid json format
@@ -88,9 +102,7 @@ def check_expirations():
 
 # Schedule the check_expirations function to run every 5 seconds
 threading.Timer(5, check_expirations).start()
-
 class reset_token(Resource):
-
     def get(self, client_id):
 
         if not isinstance(client_id, str):
@@ -126,7 +138,13 @@ def create_expire_key(key, value, days):
     r.expire(key, ttl_in_seconds)
 
 
+
+
+
+
+
 class Save(Resource):
+    decorators = [limiter.limit("5/minute")]
     def post(self, player_name):
         if not is_valid_player_id(player_name):
             return "Invalid player ID", 400
@@ -153,9 +171,7 @@ class Save(Resource):
         else:
             return "OK", 200
 
-
 class Load(Resource):
-
     def get(self, key):
 
         value = r.json().get(key)
@@ -163,9 +179,7 @@ class Load(Resource):
         if value is None:
             return {"error": f"Key '{key}' not found"}, 404
         return value, 200
-
 class GenSecret(Resource):
-
     def get(self, player):
         if r.exists(f"{player}_secret"):
             return "Error token exists", 409
@@ -186,13 +200,18 @@ class GenSecret(Resource):
             return json.dumps(list({secret, token_hash})), 200
         else:
             return "Internal Server Error", 500
-
 class Index(Resource):
     def __init__(self):
         pass
     def get(self):
-        headers = {'Content-Type': 'text/html'}
-        return make_response(render_template('index.html'),200,headers)
+        info = r.execute_command('INFO')
+        db_size_bytes = int(info['used_memory'])
+
+        # Convert to megabytes
+        db_size_mb = db_size_bytes / 1000000
+        num_keys = r.dbsize()
+        hit_count = r.get('hit_count')
+        return make_response(render_template('index.html', database_size=db_size_mb, keys=num_keys, hits=str(hit_count.decode())))
 
 
 api.add_resource(GenSecret, "/gensecret/<string:player>")
