@@ -1,3 +1,7 @@
+## MRC API Documentation
+
+Welcome to the API documentation for My Roblox Car. This API allows you to save/load savefiles from a game on Roblox made by me called My Roblox Car.
+
 ### Endpoints
 
 Below is a list of the available endpoints for the API:
