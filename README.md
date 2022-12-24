@@ -1,115 +1,103 @@
-## MRC API Documentation
+# MRC API Documentation
 
 Welcome to the API documentation for My Roblox Car. This API allows you to save/load savefiles from a game on Roblox made by me called My Roblox Car.
 
-### Endpoints
+# API Reference
 
-Below is a list of the available endpoints for the API:
+## Endpoints
 
-#### /load/[playername]
-- Description: Returns a json with the player save data.
-- HTTP Method: GET
-- Parameters:
-  - playername: Roblox ID Of player
-- Example Request: https://api.nazev.eu/get/mazltus
-- Example Response: 
-  ```json
-      "key": "mazltus"
-      "value": {
-      {
-        "version": "dev-1.0",
-        "lastplayed": [
-            2022,
-            12,
-            1
-        ],
-        "weather": {
-            "season": "summer",
-            "day": 172,
-            "hours": 12,
-            "minutes": 0,
-            "temperature": 10,
-            "weather": "sunny"
-        },
-        "needs": {
-            "health": 100,
-            "hunger": 20,
-            "thirst": 0,
-            "stress": 0,
-            "dirtiness": 0,
-            "fatigue": 0,
-            "urine": 0,
-            "money": 3000
-        },
-        "events": {
-            "teimo": true,
-            "nappo": false,
-            "teimohome": false,
-            "housefire": false
-        },
-        "car": {
-            "parts": {
-                "piston1": {
-                    "health": 100,
-                    "mounted": false,
-                    "position": [
-                        0,
-                        200,
-                        10
-                    ],
-                    "screws": {
-                        "1": 0,
-                        "2": 0
-                    }
-                }
-            },
-            "oil": 78,
-            "fuel": 0,
-            "coolant": 20,
-            "batterry": 100
-        },
-        "items": {
-            "shoppingbag": {
-                "postion": [
-                    0,
-                    100,
-                    0
-                ],
-                "items": [
-                    "beer",
-                    "saussage"
-                ]
-            },
-            "beer_empty": {
-                "position": [
-                    0,
-                    120,
-                    0
-                ]
-            }
-        }
-    }
-  ```
+### `/gensecret/[playerid]`
 
+#### Method
 
-#### /save/[playername]
-- Description: Saves player data in a json format shown above. If player key doesnt exist in redis it creates a new one.
-- HTTP Method: POST
-- Parameters:
-  - playername: Roblox ID Of player
-- Example Request: https://api.nazev.eu/save/mazltus (Include json body with your data. It owerwrites the existing key so be sure to save everything.)
-- Example Response: OK 200
+`GET`
 
-### Authentication
+#### Description
 
-I need to somehow do this.
+Generates a new token for the player specified by `playerid`. This endpoint can only be called if the player doesn't already have a token.
 
-### Errors
+#### Parameters
 
-- `200 OK`: This code indicates that the request was successful and the requested information was returned.
-- `400 Bad Request`: This code indicates that the server could not understand the request due to invalid syntax. This error is returned by the `Save` resource's `post` method if the request data is not valid JSON.
-- `404 Not Found`: This code indicates that the requested resource could not be found. This error is returned by the `Load` resource's `get` method if the requested key is not found in the Redis database.
+- `playerid` (string): The ID of the player for whom to generate a new token.
 
+#### Returns
+
+- A token (string).
+
+#### Errors
+
+- `409`: Token for the user already exists.
+
+### `/save/[playerid]?token=[token]`
+
+#### Method
+
+`POST`
+
+#### Description
+
+Saves the current game for the player specified by `playerid`, using the provided `token` to authenticate the request. This endpoint can only be called if the player has a valid token.
+
+#### Parameters
+
+- `playerid` (string): The ID of the player for whom to save the game.
+- `token` (string): The token to use for authentication.
+
+#### Returns
+
+- `200`: If the game was successfully saved.
+
+#### Errors
+
+- `400`: Invalid player ID (player doesn't exist).
+- `400`: Missing token (no token was provided as a parameter).
+- `401`: Token doesn't match DB (wrong token provided).
+- `401`: You don't have a token, make a token with the `/gensecret` path (the player's token has expired).
+- `400`: Invalid token (token is not 100 characters long).
+- `400`: Invalid JSON format (provided body format is invalid).
+- `500`: Failed to write to DB, is your JSON formatted correctly? (body is not in JSON format).
+
+### `/load/[playerid]`
+
+#### Method
+
+`GET`
+
+#### Description
+
+Loads the saved game for the player specified by `playerid`.
+
+#### Parameters
+
+- `playerid` (string): The ID of the player for whom to load the saved game.
+
+#### Returns
+
+- A JSON object containing the saved game data.
+
+#### Errors
+
+- `404`: Error, key `[key]` is not found (save game doesn't exist).
+
+### `/resettoken/[playerid]`
+
+#### Method
+
+`GET`
+
+#### Description
+
+Resets the token for the player specified by `playerid`. This endpoint can be used if the token transfer failed, and a new token needs to be generated. Can only be used in a 5 second range after a token was generated.
+
+#### Parameters
+
+- `playerid` (string): The ID of the player for whom to reset the token.
+
+#### Returns
+
+- `200`: If the token was successfully reset.
+- `403`: error Forbiden
+- `403`: Client not is not reset viable
 
 ### Using
 #### Development:
