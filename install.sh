@@ -1,1 +1,1 @@
-pip3 install redis pyyaml flask flask-restful
+pip3 install redis pyyaml flask flask-restful 
