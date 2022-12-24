@@ -100,17 +100,17 @@ I need to somehow do this.
 
 ### Errors
 
-500 Internal server error
-When loading: 404 Not found (Player doesnt have a savefile)
-When saving: 400 - Bad request (Invalid json format, Body is empty or body has invalid data type)
+- 500 Internal server error
+- When loading: 404 Not found (Player doesnt have a savefile)
+- When saving: 400 - Bad request (Invalid json format, Body is empty or body has invalid data type)
 
 ### Using
-####Development:
+#### Development:
 ```
   python3 api.py
 ```
 
-####Production:
+#### Production:
 It is recomended to use a wsgi app for example gunicorn
 ```
   gunicorn --bind 0.0.0.0:5000 wsgi:app
