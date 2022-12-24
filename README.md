@@ -106,9 +106,10 @@ I need to somehow do this.
 
 ### Errors
 
-- 500 Internal server error
-- When loading: 404 Not found (Player doesnt have a savefile)
-- When saving: 400 - Bad request (Invalid json format, Body is empty or body has invalid data type)
+- `200 OK`: This code indicates that the request was successful and the requested information was returned.
+- `400 Bad Request`: This code indicates that the server could not understand the request due to invalid syntax. This error is returned by the `Save` resource's `post` method if the request data is not valid JSON.
+- `404 Not Found`: This code indicates that the requested resource could not be found. This error is returned by the `Load` resource's `get` method if the requested key is not found in the Redis database.
+
 
 ### Using
 #### Development:
