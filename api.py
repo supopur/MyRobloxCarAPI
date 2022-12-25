@@ -12,6 +12,9 @@ from flask import render_template, make_response
 from flask_limiter import Limiter
 
 
+os.environ['SSL_CERT_FILE'] = 'certs/certificate.crt'
+os.environ['SSL_KEY_FILE'] = 'certs/private.key'
+
 
 #Get password from the yml file
 def get_password():
@@ -147,9 +150,12 @@ class Save(Resource):
     decorators = [limiter.limit("5/minute")]
     def post(self, player_name):
         if not is_valid_player_id(player_name):
+            print("Invalid player ID")
             return "Invalid player ID", 400
         token = request.args.get("token")
-        if isinstance(token, type(None)): return "Missing token", 400
+        if isinstance(token, type(None)):
+            print("Missing token")
+            return "Missing token", 400
         if len(token) == 100:
             key_exists = r.exists(f"{player_name}_secret")
             if key_exists:
@@ -158,15 +164,20 @@ class Save(Resource):
                     pass
                 else: return "Token doesnt match the DB", 403
             else: return "You dont have a token make a token with the gensecret path", 404
-        else: return "Invalid token", 400
+        else:
+            print("Invalid token")
+            return "Invalid token", 400
+
 
         data = request.data
         if not check_json(data):
+            print("Invalid JSON fromat")
             return "Invalid JSON format", 400
         data = json.loads(data)
         try:
             r.json().set(player_name, Path.root_path(), data["value"])
         except:
+            print("Failed to write to the DB")
             return "Failed to write to the DB Is your json formatted correctly?", 400
         else:
             return "OK", 200
@@ -197,7 +208,10 @@ class GenSecret(Resource):
 
             # Store the token, expiration time, and request time in the dictionary
             ttl_dictionary[player] = {"token": token_hash, "expiration": expiration_time, "request_time": datetime.datetime.now().second}
-            return json.dumps(list({secret, token_hash})), 200
+            return {
+                  "sha1sum": token_hash,
+                  "token": secret
+            }, 200, { "Content-Type": "application/json" }
         else:
             return "Internal Server Error", 500
 class Index(Resource):
@@ -221,4 +235,4 @@ api.add_resource(reset_token, "/resettoken/<string:client_id>")
 api.add_resource(Index, "/")
 
 if __name__ == "__main__":
-    app.run("0.0.0.0", port="5000", debug=True)
+    app.run("0.0.0.0", port="5000", debug=True, ssl_context=('certs/certificate.crt', 'certs/private.key'))
