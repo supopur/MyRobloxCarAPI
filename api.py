@@ -4,11 +4,10 @@
 #Most security related code was wrote by chatgpt.
 
 import redis, yaml, os, json, pathlib, secrets, hashlib, threading, datetime, time, requests
-from flask import Flask
-from flask import Flask, request
+from flask import Flask, request, render_template, make_response, jsonify, Response
 from flask_restful import Resource, Api
 from redis.commands.json.path import Path
-from flask import render_template, make_response
+
 from flask_limiter import Limiter
 
 
@@ -150,37 +149,45 @@ class Save(Resource):
     decorators = [limiter.limit("5/minute")]
     def post(self, player_name):
         if not is_valid_player_id(player_name):
-            print("Invalid player ID")
-            return "Invalid player ID", 400
+            message = json.dumps({"error": "Invalid player ID"})
+            return Response(message, status=400, mimetype='application/json')
         token = request.args.get("token")
         if isinstance(token, type(None)):
-            print("Missing token")
-            return "Missing token", 400
+            message = json.dumps({"error": "Missing token"})
+            return Response(message, status=400, mimetype='application/json')
         if len(token) == 100:
             key_exists = r.exists(f"{player_name}_secret")
             if key_exists:
                 #This should NOT work but leave it here if you know how to make this better make a issue on github
                 if str(r.get(f"{player_name}_secret"))[2:-1] == str(token):
                     pass
-                else: return "Token doesnt match the DB", 403
-            else: return "You dont have a token make a token with the gensecret path", 404
+                else:
+                    message = json.dumps({"error": "Token doesnt match the DB"})
+                    return Response(message, status=400, mimetype='application/json')
+            else:
+                message = json.dumps({"error": "You dont have a token make a token with the gensecret path"})
+                return Response(message, status=404, mimetype='application/json')
         else:
-            print("Invalid token")
-            return "Invalid token", 400
+            message = json.dumps({"error": "Invalid token"})
+            return Response(message, status=400, mimetype='application/json')
 
 
         data = request.data
         if not check_json(data):
-            print("Invalid JSON fromat")
-            return "Invalid JSON format", 400
+            message = json.dumps({"error": "Invalid JSON format"})
+            return Response(message, status=400, mimetype='application/json')
         data = json.loads(data)
         try:
-            r.json().set(player_name, Path.root_path(), data["value"])
+            r.json().set(player_name, Path.root_path(), data)
+            ttl = 15778800
+            r.expire(player_name, ttl)
         except:
-            print("Failed to write to the DB")
-            return "Failed to write to the DB Is your json formatted correctly?", 400
+            message = json.dumps({"error": "Failed to write to the DB. Is your json formatted correctly?"})
+            return Response(message, status=400, mimetype='application/json')
         else:
-            return "OK", 200
+            message = json.dumps({'message': "OK"})
+            return Response(message, status=200, mimetype='application/json')
+
 
 class Load(Resource):
     def get(self, key):
