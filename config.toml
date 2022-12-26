@@ -1,7 +1,10 @@
 [server]
+#set to false if you dont have a certificate
 usessl = true
 port = "5000"
+#DO NOT USE IN PRODUCTION. Do not even use flask it is recomended to use a production ready wsgi server such as gunicorn
 debug = true
+#Leave it like this if you dont know what your doing.
 ip = "0.0.0.0"
 crt = "certs/certificate.crt"
 key = "certs/private.key"
@@ -9,11 +12,13 @@ key = "certs/private.key"
 [save]
 #Max hits per minute for a token#
 limiter = 5
+#Time in seconds to keep a savegame in redis. TTL Resets when a player saves his game. When the ttl reaches zero the key is deleted. Current time is half a year
 ttl = 15778800
 
 [gensecret]
 #Time in seconds Time for client to reset a token. CANT BE OVER 50#
 resettime = 5
+#Time in seconds to keep a token in redis. Once reaches 0 the client must call gensecret endpoint to get a new one. Current time is 1 week
 ttl = 604800
 
 [generatetoken]
