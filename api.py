@@ -3,7 +3,7 @@
 #I got permision. You can search for my issue on github on his repo.
 #Most security related code was wrote by chatgpt.
 
-import redis, yaml, os, json, pathlib, secrets, hashlib, threading, datetime, time, requests
+import redis, yaml, os, json, pathlib, secrets, hashlib, threading, datetime, time, requests, toml
 from flask import Flask, request, render_template, make_response, jsonify, Response
 from flask_restful import Resource, Api
 from redis.commands.json.path import Path
@@ -14,6 +14,15 @@ from flask_limiter import Limiter
 os.environ['SSL_CERT_FILE'] = 'certs/certificate.crt'
 os.environ['SSL_KEY_FILE'] = 'certs/private.key'
 
+
+with open("config.toml", "r") as f:
+    config = toml.load(f)
+
+print(config)
+server = config["server"]
+save = config["save"]
+gensecret = config["gensecret"]
+generatetoken = config["generatetoken"]
 
 #Get password from the yml file
 def get_password():
@@ -62,7 +71,7 @@ def check_json(data):
 #Make a client secret used for authenticating users
 def generate_token():
     #Generates a random, secure token.
-    return secrets.token_hex(50)
+    return secrets.token_hex(generatetoken["lenght"])
 
 def is_valid_player_id(player_id):
     # Set the API endpoint URL
@@ -117,7 +126,7 @@ class reset_token(Resource):
             request_time = ttl_dictionary[client_id]["request_time"]
             time_since_request = datetime.datetime.now().second - request_time
 
-            if not time_since_request < 5:
+            if not time_since_request < gensecret["resettime"]:
                 # Return a 403 error if the client has already requested a token within the past 30 seconds
                 return {"error": "Forbidden"}, 403
             else:
@@ -135,9 +144,9 @@ class reset_token(Resource):
 def create_expire_key(key, value, days):
     # Set the key with the value
     r.set(key, value)
-    ttl_in_seconds = days * 24 * 60 * 60
+
     # Set the key's TTL to 1 week
-    r.expire(key, ttl_in_seconds)
+    r.expire(key, gensecret["ttl"])
 
 
 
@@ -208,10 +217,10 @@ class GenSecret(Resource):
             token_hash = hashlib.sha1(secret.encode()).hexdigest()
 
             # Calculate the expiration time for the token (1 week from now)
-            expiration_time = datetime.datetime.now().second + 5
+            expiration_time = datetime.datetime.now().second + gensecret["resettime"]
             if expiration_time > 50:
                 time.sleep(12)
-                expiration_time = datetime.datetime.now().second + 5
+                expiration_time = datetime.datetime.now().second + gensecret["resettime"]
 
             # Store the token, expiration time, and request time in the dictionary
             ttl_dictionary[player] = {"token": token_hash, "expiration": expiration_time, "request_time": datetime.datetime.now().second}
@@ -242,4 +251,7 @@ api.add_resource(reset_token, "/resettoken/<string:client_id>")
 api.add_resource(Index, "/")
 
 if __name__ == "__main__":
-    app.run("0.0.0.0", port="5000", debug=True, ssl_context=('certs/certificate.crt', 'certs/private.key'))
+    if server["usessl"]:
+        app.run(server["ip"], port=server["port"], debug=server["debug"], ssl_context=(server["crt"], server["key"]))
+    else:
+        app.run(server["ip"], port=server["port"], debug=server["debug"])

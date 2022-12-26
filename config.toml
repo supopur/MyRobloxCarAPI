@@ -1,0 +1,22 @@
+[server]
+usessl = true
+port = "5000"
+debug = true
+ip = "0.0.0.0"
+crt = "certs/certificate.crt"
+key = "certs/private.key"
+
+[save]
+#Max hits per minute for a token#
+limiter = 5
+ttl = 15778800
+
+[gensecret]
+#Time in seconds Time for client to reset a token. CANT BE OVER 50#
+resettime = 5
+ttl = 604800
+
+[generatetoken]
+#Lenght of the token in hex so 100 = 50. Formula: lenght = timewanted / 2#
+lenght = 50
+
